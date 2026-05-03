@@ -1,12 +1,8 @@
-const { Client, GatewayIntentBits } = require("discord.js");
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
 
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  if (interaction.commandName === "ping") {
+    await interaction.deferReply(); // acknowledges instantly
+    await interaction.editReply("Pong 🏓");
+  }
 });
-
-client.once("ready", () => {
-  console.log(`Logged in as ${client.user.tag}`);
-});
-
-client.login(process.env.TOKEN);
-
