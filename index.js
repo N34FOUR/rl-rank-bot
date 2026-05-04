@@ -83,13 +83,6 @@ async function getRLStats(epicName) {
   }
 }
 
-    return res.data;
-  } catch (err) {
-    console.log("RL fetch error:", err.response?.data || err.message);
-    return null;
-  }
-}
-
 async function setupRoles(guild) {
   for (const rank of ranks) {
     let role = guild.roles.cache.find(r => r.name === rank.name);
@@ -122,25 +115,27 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   if (interaction.commandName === "link") {
-  const epic = interaction.options.getString("epic");
+    const epic = interaction.options.getString("epic");
 
-  await interaction.reply(`Checking stats for **${epic}**...`);
+    await interaction.reply(`Checking stats for **${epic}**...`);
 
-  const data = await getRLStats(epic);
+    const data = await getRLStats(epic);
 
-  if (!data) {
-    return interaction.followUp("Could not fetch Rocket League stats.");
+    if (!data) {
+      return interaction.followUp("Could not fetch Rocket League stats.");
+    }
+
+    const rank = getRankFromData(data);
+
+    userLinks.set(interaction.user.id, { epic, rank });
+
+    await assignRankRole(interaction.member, rank);
+
+    await interaction.followUp(
+      `Linked **${epic}**\nAssigned Rank Role: **${rank}**`
+    );
   }
+});
 
-  const rank = getRankFromData(data);
-
-  userLinks.set(interaction.user.id, { epic, rank });
-
-  await assignRankRole(interaction.member, rank);
-
-  await interaction.followUp(
-    `Linked **${epic}**\nAssigned Rank Role: **${rank}**`
-  );
-}
-
+// 👇 THIS MUST EXIST
 client.login(process.env.TOKEN);
