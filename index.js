@@ -46,3 +46,17 @@ client.on("interactionCreate", async (interaction) => {
 
 client.login(process.env.TOKEN);
 console.log("role system test change");
+const userLinks = new Map();
+
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  // LINK COMMAND
+  if (interaction.commandName === "link") {
+    const epic = interaction.options.getString("epic");
+
+    userLinks.set(interaction.user.id, epic);
+
+    await interaction.reply(`Linked your Epic account: **${epic}**`);
+  }
+});
