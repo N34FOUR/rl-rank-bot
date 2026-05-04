@@ -17,7 +17,53 @@ const ranks = [
   { name: "Grand Champion", color: 0xff4d4d },
   { name: "SSL", color: 0xffffff }
 ];
+async function assignRankRole(member, rankName) {
+  const guild = member.guild;
 
+  // remove old rank roles
+  const allRankNames = ranks.map(r => r.name);
+
+  member.roles.cache.forEach(role => {
+    if (allRankNames.includes(role.name)) {
+      member.roles.remove(role);
+    }
+  });
+
+  // add new role
+  const newRole = guild.roles.cache.find(r => r.name === rankName);
+
+  if (newRole) {
+    await member.roles.add(newRole);
+  }
+}
+function getRankFromData(data) {
+  const segments = data?.data?.segments || [];
+
+  const ranked = segments.find(s =>
+    s.metadata?.name?.toLowerCase().includes("ranked")
+  );
+
+  const tier = ranked?.stats?.tier?.displayValue;
+
+  if (!tier) return "Unranked";
+
+  const map = {
+    "Bronze": "Bronze",
+    "Silver": "Silver",
+    "Gold": "Gold",
+    "Platinum": "Platinum",
+    "Diamond": "Diamond",
+    "Champion": "Champion",
+    "Grand Champion": "Grand Champion",
+    "Supersonic Legend": "SSL"
+  };
+
+  for (const key in map) {
+    if (tier.includes(key)) return map[key];
+  }
+
+  return "Unranked";
+}
 async function getRLStats(epicName) {
   try {
     const res = await axios.get(
@@ -76,20 +122,25 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   if (interaction.commandName === "link") {
-    const epic = interaction.options.getString("epic");
+  const epic = interaction.options.getString("epic");
 
-    await interaction.reply(`Checking stats for **${epic}**...`);
+  await interaction.reply(`Checking stats for **${epic}**...`);
 
-    const data = await getRLStats(epic);
+  const data = await getRLStats(epic);
 
-    if (!data) {
-      return interaction.followUp("Could not fetch Rocket League stats.");
-    }
-
-    userLinks.set(interaction.user.id, epic);
-
-    await interaction.followUp(`Linked **${epic}** successfully.`);
+  if (!data) {
+    return interaction.followUp("Could not fetch Rocket League stats.");
   }
-});
+
+  const rank = getRankFromData(data);
+
+  userLinks.set(interaction.user.id, { epic, rank });
+
+  await assignRankRole(interaction.member, rank);
+
+  await interaction.followUp(
+    `Linked **${epic}**\nAssigned Rank Role: **${rank}**`
+  );
+}
 
 client.login(process.env.TOKEN);
