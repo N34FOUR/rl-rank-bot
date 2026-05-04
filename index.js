@@ -23,9 +23,19 @@ async function getRLStats(epicName) {
     const res = await axios.get(
       `https://public-api.tracker.gg/v2/rocket-league/standard/profile/epic/${epicName}`,
       {
-        headers: { Accept: "application/json" }
+        headers: {
+          Accept: "application/json"
+        },
+        timeout: 8000
       }
     );
+
+    return res.data;
+  } catch (err) {
+    console.log("RL fetch failed:", err.message);
+    return null;
+  }
+}
 
     return res.data;
   } catch (err) {
