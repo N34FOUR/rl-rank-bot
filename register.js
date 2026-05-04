@@ -1,5 +1,9 @@
 const { REST, Routes, SlashCommandBuilder } = require("discord.js");
 
+const TOKEN = process.env.TOKEN;
+const CLIENT_ID = "1500616659910656020";
+const GUILD_ID = "1500575733586591825";
+
 const commands = [
   new SlashCommandBuilder()
     .setName("ping")
@@ -15,14 +19,14 @@ const commands = [
     )
 ].map(cmd => cmd.toJSON());
 
-const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+const rest = new REST({ version: "10" }).setToken(TOKEN);
 
 (async () => {
   try {
     console.log("Registering commands...");
 
     await rest.put(
-      Routes.applicationCommands("1500616659910656020", "1500575733586591825"),
+      Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
       { body: commands }
     );
 
