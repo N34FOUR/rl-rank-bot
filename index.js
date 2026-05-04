@@ -1,27 +1,12 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 const axios = require("axios");
 
-async function getRLStats(epicName) {
-  try {
-    const res = await axios.get(
-      `https://public-api.tracker.gg/v2/rocket-league/standard/profile/epic/${epicName}`,
-      {
-        headers: {
-          Accept: "application/json"
-        }
-      }
-    );
-
-    return res.data;
-  } catch (err) {
-    console.log("RL fetch error:", err.response?.data || err.message);
-    return null;
-  }
-}
-const userLinks = new Map();
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
+
+const userLinks = new Map();
+
 const ranks = [
   { name: "Bronze", color: 0x6b4f3a },
   { name: "Silver", color: 0xb0b0b0 },
@@ -33,6 +18,22 @@ const ranks = [
   { name: "SSL", color: 0xffffff }
 ];
 
+async function getRLStats(epicName) {
+  try {
+    const res = await axios.get(
+      `https://public-api.tracker.gg/v2/rocket-league/standard/profile/epic/${epicName}`,
+      {
+        headers: { Accept: "application/json" }
+      }
+    );
+
+    return res.data;
+  } catch (err) {
+    console.log("RL fetch error:", err.response?.data || err.message);
+    return null;
+  }
+}
+
 async function setupRoles(guild) {
   for (const rank of ranks) {
     let role = guild.roles.cache.find(r => r.name === rank.name);
@@ -41,12 +42,14 @@ async function setupRoles(guild) {
       role = await guild.roles.create({
         name: rank.name,
         color: rank.color,
-        reason: "Rocket League rank role setup"
+        reason: "Rocket League rank roles"
       });
+
       console.log(`Created role: ${rank.name}`);
     }
   }
 }
+
 client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
@@ -56,47 +59,27 @@ client.once("ready", async () => {
 });
 
 client.on("interactionCreate", async (interaction) => {
-  if (interaction.commandName === "link") {
-  const epic = interaction.options.getString("epic");
+  if (!interaction.isChatInputCommand()) return;
 
-  await interaction.reply(`Checking stats for **${epic}**...`);
-
-  const data = await getRLStats(epic);
-
-  if (!data) {
-    return interaction.followUp("Could not fetch Rocket League stats.");
+  if (interaction.commandName === "ping") {
+    return interaction.reply("Pong 🏓");
   }
 
-  userLinks.set(interaction.user.id, epic);
-
-  await interaction.followUp(`Linked **${epic}** successfully.`);
-}
-if (!interaction.isChatInputCommand()) return;
   if (interaction.commandName === "link") {
-  const epic = interaction.options.getString("epic");
+    const epic = interaction.options.getString("epic");
 
-  userLinks.set(interaction.user.id, epic);
+    await interaction.reply(`Checking stats for **${epic}**...`);
 
-  await interaction.reply(`Linked Epic account: **${epic}**`);
-}
-  if (interaction.commandName === "ping") {
-    await interaction.reply("Pong 🏓");
+    const data = await getRLStats(epic);
+
+    if (!data) {
+      return interaction.followUp("Could not fetch Rocket League stats.");
+    }
+
+    userLinks.set(interaction.user.id, epic);
+
+    await interaction.followUp(`Linked **${epic}** successfully.`);
   }
 });
 
 client.login(process.env.TOKEN);
-console.log("role system test change");
-const userLinks = new Map();
-
-client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-
-  // LINK COMMAND
-  if (interaction.commandName === "link") {
-    const epic = interaction.options.getString("epic");
-
-    userLinks.set(interaction.user.id, epic);
-
-    await interaction.reply(`Linked your Epic account: **${epic}**`);
-  }
-});
