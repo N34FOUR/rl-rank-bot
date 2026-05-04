@@ -1,5 +1,24 @@
 const { Client, GatewayIntentBits } = require("discord.js");
+const axios = require("axios");
 
+async function getRLStats(epicName) {
+  try {
+    const res = await axios.get(
+      `https://public-api.tracker.gg/v2/rocket-league/standard/profile/epic/${epicName}`,
+      {
+        headers: {
+          Accept: "application/json"
+        }
+      }
+    );
+
+    return res.data;
+  } catch (err) {
+    console.log("RL fetch error:", err.response?.data || err.message);
+    return null;
+  }
+}
+const userLinks = new Map();
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
@@ -37,8 +56,29 @@ client.once("ready", async () => {
 });
 
 client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName === "link") {
+  const epic = interaction.options.getString("epic");
 
+  await interaction.reply(`Checking stats for **${epic}**...`);
+
+  const data = await getRLStats(epic);
+
+  if (!data) {
+    return interaction.followUp("Could not fetch Rocket League stats.");
+  }
+
+  userLinks.set(interaction.user.id, epic);
+
+  await interaction.followUp(`Linked **${epic}** successfully.`);
+}
+if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName === "link") {
+  const epic = interaction.options.getString("epic");
+
+  userLinks.set(interaction.user.id, epic);
+
+  await interaction.reply(`Linked Epic account: **${epic}**`);
+}
   if (interaction.commandName === "ping") {
     await interaction.reply("Pong 🏓");
   }
